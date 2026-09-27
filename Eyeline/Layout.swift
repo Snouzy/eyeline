@@ -92,11 +92,10 @@ enum Layout {
         return Double(wordsPerMinute) / 60 * textHeight / Double(wordCount)
     }
 
-    // Locations of the four fade-mask stops, as fractions of the column height.
+    // The two fade-mask stops, as fractions of the column height: the text above fades out, the text below stays.
     static func fadeStops(readingY: Double, lineHeight: Double, height: Double) -> [Double] {
         let top = readingY - 1.5 * lineHeight
-        let bottom = readingY + 3.5 * lineHeight
-        return [top - 2 * lineHeight, top, bottom, bottom + 2 * lineHeight].map { min(max($0 / height, 0), 1) }
+        return [top - 2 * lineHeight, top].map { min(max($0 / height, 0), 1) }
     }
 
     // MARK: - Text

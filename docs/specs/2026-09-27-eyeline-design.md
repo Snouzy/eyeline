@@ -71,7 +71,7 @@ On the recordings, viewers see that the user reads: the eyes sweep lines of text
 - The screen stays on while the prompter is open: `isIdleTimerDisabled` is true on appear and false on disappear.
 - The column: its inner edge touches the hidden band, on the side set in Setup: left, right, or both (the default; each line then continues across the band). The text is left-aligned. The width of each side, the text size and the line spacing come from Setup.
 - The reading line: at the height set in Setup. A small grey mark at the outer edge of the column shows it.
-- Fade: about one line above and three lines below the reading line are fully visible. The text then fades to transparent within two lines, up and down. The values are tuned on the device.
+- Fade: one line above the reading line stays fully visible, and the text above it fades to transparent within two lines. The text below the reading line stays visible down to the bottom of the screen.
 - At the start, the first line sits on the reading line.
 - States:
 
@@ -231,6 +231,10 @@ On 2026-09-27 the user asked for:
 - **Smaller text**: the text size goes down to 12 pt.
 - **No Markdown marks.** Pasted scripts kept `>`, `#`, list dashes and `**`. The prompter and the list title show the text without them (`Layout.plainText`); the saved script does not change. A token without a letter or a digit is not a word, so the marks no longer make the scroll faster.
 - **Setup panel at the top**, in two blocks. In the middle of the left strip, it covered the handle of the left column.
+
+## Changes after the third test on the rig
+
+The fade hid the text more than three lines below the reading line. With small text and tight line spacing, that left most of the screen black under the reading line. Now only the lines already read fade out; the text to come stays visible to the bottom of the screen.
 
 ## Risks
 

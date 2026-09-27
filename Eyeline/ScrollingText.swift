@@ -60,7 +60,7 @@ final class PrompterCanvas: UIView {
         textView.textContainer.lineFragmentPadding = 0
         textView.contentInsetAdjustmentBehavior = .never
         textView.showsVerticalScrollIndicator = false
-        fade.colors = [UIColor.clear.cgColor, UIColor.black.cgColor, UIColor.black.cgColor, UIColor.clear.cgColor]
+        fade.colors = [UIColor.clear.cgColor, UIColor.black.cgColor]
         column.layer.mask = fade
         column.addSubview(textView)
         addSubview(column)

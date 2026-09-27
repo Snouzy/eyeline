@@ -111,6 +111,11 @@
 - [x] 40 tests unitaires et 2 tests UI passent sur iOS 26.4.1 et 18.3.1, zéro warning ; capture `simctl` vérifiée
 - [ ] Sur l'iPhone : régler chaque côté, l'interligne, un texte à 12 pt
 
+## Texte visible sous la ligne de lecture (27/09, troisième test)
+
+- [x] Le fondu ne cache plus que les lignes déjà lues ; le texte à venir reste visible jusqu'en bas
+- [x] 41 tests unitaires et 2 tests UI passent ; capture `simctl` avec texte 16 pt, interligne 1,1, ligne de lecture à 25 %
+
 ## À vérifier à la main (iPhone)
 
 - [ ] Défilement fluide à 120 Hz, sans saccade

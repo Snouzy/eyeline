@@ -23,7 +23,7 @@ A full-width line on an iPhone in landscape at 60 cm sweeps your eyes over more 
 ## ✨ Features
 
 - 🎯 **Lens-anchored text**: the text scrolls right against the camera body, on the left, on the right, or on both sides. On both sides, each line starts left of the camera and ends right of it.
-- 📏 **Reading line at lens height**: the line you read is bright; the lines above and below fade out.
+- 📏 **Reading line at lens height**: the lines already read fade out; the lines to come stay visible down to the bottom of the screen.
 - 🛠️ **On-screen setup**: drag the edges of the hidden band until they line up with the camera body, and drag the reading line to the lens.
 - ↔️ **A width for each side**: drag the outer edge of each column. Text size (12 to 80 pt) and line spacing are settings too.
 - ⏱️ **Speed in words per minute**: the app measures your layout and turns 130 words/min into the right scroll speed. The list shows the duration of each script.

@@ -138,9 +138,13 @@ struct ScrollTests {
         #expect(Layout.lineHeight(fontSize: 30, spacing: 1.5) == 45)
     }
 
+    @Test func onlyTheLinesAlreadyReadFadeOut() {
+        // One line above the reading line stays visible. Below it, the text stays visible to the bottom.
+        #expect(Layout.fadeStops(readingY: 200, lineHeight: 40, height: 400) == [0.15, 0.35])
+    }
+
     @Test func fadeStopsStayBetweenZeroAndOne() {
-        let stops = Layout.fadeStops(readingY: 200, lineHeight: 40, height: 400)
-        #expect(stops == [0.15, 0.35, 0.85, 1])
+        #expect(Layout.fadeStops(readingY: 50, lineHeight: 40, height: 400) == [0, 0])
     }
 }
 

@@ -48,7 +48,7 @@ xcrun simctl io booted screenshot shot.png
 - `ScriptListView`: list, `PasteButton`, "+", swipe to delete, error alert.
 - `EditorView`: plain text, saved on each change. Deletes the script when it closes empty. Opens the prompter with the text without its Markdown marks; the saved script keeps them.
 - `PrompterView`: phases (ready, countdown, scrolling, paused, ended); a 3-second countdown before each start; pause when the app leaves the foreground; screen kept on; controls in one row at the top, where the fade hides the text.
-- `ScrollingText` / `PrompterCanvas`: a full-screen `UIView` that catches the taps and holds the column. A `UITextView` with TextKit 1 (exact height), moved by a `CADisplayLink`. Position = start offset + speed × elapsed time. A `CAGradientLayer` mask fades the lines away from the reading line. In a two-sided column, an exclusion path over the band cuts each line: the text fills the left part, then the right part.
+- `ScrollingText` / `PrompterCanvas`: a full-screen `UIView` that catches the taps and holds the column. A `UITextView` with TextKit 1 (exact height), moved by a `CADisplayLink`. Position = start offset + speed × elapsed time. A `CAGradientLayer` mask fades the lines above the reading line; the text below stays visible to the bottom. In a two-sided column, an exclusion path over the band cuts each line: the text fills the left part, then the right part.
 - `SetupHandles`: the hidden band (orange edges), the outer edge of each column (white) and the reading line, moved by drag. The handles run the full screen height. `SetupPanel`: two blocks at the top, side and OK on the left, text size and line spacing on the right.
 
 ## Performance principles to keep
