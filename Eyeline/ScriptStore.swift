@@ -44,7 +44,8 @@ final class ScriptStore {
             .compactMap { url in
                 guard let text = try? String(contentsOf: url, encoding: .utf8) else { return nil }
                 let values = try? url.resourceValues(forKeys: [.contentModificationDateKey])
-                return Script(id: url.lastPathComponent, text: text, modified: values?.contentModificationDate ?? .distantPast)
+                let modified = values?.contentModificationDate ?? .distantPast
+                return Script(id: url.lastPathComponent, text: text, modified: modified)
             }
             .sorted { $0.modified > $1.modified }
         // The editor deletes an empty script when it closes. If the app was killed first, the file is still here.

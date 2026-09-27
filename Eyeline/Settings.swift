@@ -2,6 +2,7 @@ import Foundation
 
 enum ColumnSide: String {
     case left
+    case both
     case right
 }
 
@@ -14,14 +15,19 @@ enum Setting {
 
     static let fontSizeKey = "fontSize"
     static let fontSize = 34.0
-    static let fontSizeRange = 20.0...80.0
+    static let fontSizeRange = 12.0...80.0
 
-    static let columnWidthKey = "columnWidth"
+    static let lineSpacingKey = "lineSpacing"
+    static let lineSpacing = 1.4
+    static let lineSpacingRange = 1.0...2.0
+
+    static let leftColumnWidthKey = "leftColumnWidth"
+    static let rightColumnWidthKey = "rightColumnWidth"
     static let columnWidth = 220.0
     static let minColumnWidth = 60.0
 
     static let columnSideKey = "columnSide"
-    static let columnSide = ColumnSide.right
+    static let columnSide = ColumnSide.both
 
     static let bandCenterKey = "bandCenter"
     static let bandCenter = 0.5

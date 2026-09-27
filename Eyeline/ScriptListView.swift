@@ -13,7 +13,8 @@ struct ScriptListView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(Layout.title(script.text) ?? "Sans titre")
                                 .lineLimit(1)
-                            Text(Layout.summary(wordCount: Layout.wordCount(script.text), wordsPerMinute: wordsPerMinute))
+                            Text(Layout.summary(
+                                wordCount: Layout.wordCount(script.text), wordsPerMinute: wordsPerMinute))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }

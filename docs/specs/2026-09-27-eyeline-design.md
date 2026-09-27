@@ -69,7 +69,7 @@ On the recordings, viewers see that the user reads: the eyes sweep lines of text
 
 - Black background, white text, system font, semibold. The status bar is hidden.
 - The screen stays on while the prompter is open: `isIdleTimerDisabled` is true on appear and false on disappear.
-- The column: its inner edge touches the hidden band, on the side set in Setup (right by default). The text is left-aligned. The column width and the text size come from Setup.
+- The column: its inner edge touches the hidden band, on the side set in Setup: left, right, or both (the default; each line then continues across the band). The text is left-aligned. The width of each side, the text size and the line spacing come from Setup.
 - The reading line: at the height set in Setup. A small grey mark at the outer edge of the column shows it.
 - Fade: about one line above and three lines below the reading line are fully visible. The text then fades to transparent within two lines, up and down. The values are tuned on the device.
 - At the start, the first line sits on the reading line.
@@ -84,7 +84,7 @@ On the recordings, viewers see that the user reads: the eyes sweep lines of text
 | Ended (last line past the reading line) | Start the countdown from the top | Controls visible |
 
 - The countdown runs before each start and each restart: the phone is behind the Pocket, and the user needs 3 seconds to go back to position.
-- Controls: close (✕), speed − and + (steps of 10 words per minute, 60 to 240), back to the top, Setup. They are in the side strip opposite the column, so they never cover the text.
+- Controls: close (✕), speed − and + (steps of 10 words per minute, 60 to 240), back to the top, Setup. They are in one row at the top of the screen, where the fade hides the text.
 
 ### Setup
 
@@ -92,7 +92,8 @@ On the recordings, viewers see that the user reads: the eyes sweep lines of text
 - The hidden band shows as a coloured translucent rectangle over the full screen height. The reading line shows as a horizontal line.
   - Drag an edge of the band: move that edge (20 pt minimum between the edges). The middle of the band is behind the Pocket and cannot be touched, so the edges are the only handles.
   - Drag the reading line: move it up or down.
-- A panel in the side strip opposite the column: side of the column (Gauche / Droite), column width, text size, and an "OK" button that goes back to the previous state.
+- Drag the outer edge of a column (white): change the width of that side (60 pt minimum, up to the screen edge).
+- Two blocks at the top, so that the full-height handles stay free below them: side of the column (Gauche / Les deux / Droite) and an "OK" button that goes back to the previous state on the left; text size and line spacing on the right.
 - Each value saves at once.
 - The user sits at the filming position, checks that the band edges disappear behind the Pocket, and adjusts. This takes a few tries, because the band width depends on the eye position (parallax).
 
@@ -101,9 +102,10 @@ On the recordings, viewers see that the user reads: the eyes sweep lines of text
 | Setting | Stored as | Default | Range |
 | --- | --- | --- | --- |
 | Words per minute | integer | 130 | 60–240 |
-| Text size | points | 34 | 20–80 |
-| Column width | points | 220 (about 3.5 cm) | 60 to the width of the side strip |
-| Column side | left or right | right | — |
+| Text size | points | 34 | 12–80 |
+| Line spacing | line height ÷ text size | 1.4 | 1.0–2.0 |
+| Left column width, right column width | points | 220 each (about 3.5 cm) | 60 to the width of the side strip |
+| Column side | left, both or right | both | — |
 | Hidden band centre | fraction of the screen width | 0.5 | band stays on screen |
 | Hidden band width | points | 280 (about 45 mm on an iPhone Pro) | 20 to half the screen width |
 | Reading line | fraction of the screen height | 0.5 | 0.1–0.9 |
@@ -154,7 +156,7 @@ On the recordings, viewers see that the user reads: the eyes sweep lines of text
 | `EditorView.swift` | Plain-text editor, "Lire" button |
 | `PrompterView.swift` | States, countdown, tap, drag, controls, idle timer |
 | `ScrollingText.swift` | `UITextView` + `CADisplayLink` + fade mask |
-| `SetupView.swift` | Hidden band, reading line, side, width, text size |
+| `SetupView.swift` | Hidden band, column edges, reading line; side, text size, line spacing |
 | `Layout.swift` | Pure functions: column frame, speed, duration, word count, title |
 | `Settings.swift` | The `@AppStorage` keys and defaults |
 
@@ -205,10 +207,30 @@ On the recordings, viewers see that the user reads: the eyes sweep lines of text
 A throwaway build of the whole app ran on the simulator (iOS 18.3.1 and 26.4.1) before the plan. It changed these points:
 
 - Default column width 150 → 220 pt: at 34 pt, "aujourd'hui" did not fit in 150 pt and broke inside the word.
-- The prompter controls moved to the side strip opposite the column: in a corner, they covered the text.
+- The prompter controls moved to the side strip opposite the column: in a corner, they covered the text. (Later moved to a top row, see below.)
 - Setup moves the band by its edges only: the middle is behind the Pocket.
 - The list deletes empty scripts when it loads.
 - A UI test target was added: the command line cannot tap, and the taps through the UIKit text were the main risk.
+
+## Changes after the first test on the rig
+
+On 2026-09-27 the user tested v1 behind the Pocket and asked for text on both sides of it, with the one-side modes kept.
+
+- `ColumnSide` has a third case, `both`, and it is the default. Setup offers "Gauche / Les deux / Droite".
+- A two-sided column spans the left column, the band and the right column. The column width is the width of each side, and each side stops at its own screen edge.
+- TextKit 1 flows the text around the band (`exclusionPaths`): each line fills the left part, then the right part. The scroll engine, the speed formula and the fade do not change.
+- The countdown shows in the left part, where each line starts. The middle is behind the Pocket.
+- The prompter controls moved to one row at the top: the side strips can both hold text now, and the fade hides the top of the screen.
+
+## Changes after the second test on the rig
+
+On 2026-09-27 the user asked for:
+
+- **A width for each side.** Left and right columns have their own stored width. In Setup, the outer edge of each column is a white handle. The "column width" slider is gone.
+- **Line spacing as a setting**: 1.0 to 2.0, default 1.4 (the value that was fixed before).
+- **Smaller text**: the text size goes down to 12 pt.
+- **No Markdown marks.** Pasted scripts kept `>`, `#`, list dashes and `**`. The prompter and the list title show the text without them (`Layout.plainText`); the saved script does not change. A token without a letter or a digit is not a word, so the marks no longer make the scroll faster.
+- **Setup panel at the top**, in two blocks. In the middle of the left strip, it covered the handle of the left column.
 
 ## Risks
 

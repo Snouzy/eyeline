@@ -91,6 +91,26 @@
 - [x] `CLAUDE.md` : section « Current state » à jour
 - [x] `Config/Local.xcconfig` avec l'équipe de l'utilisateur, build et installation sur son iPhone
 
+## Deux côtés de la Pocket (demande du 27/09 après le premier test)
+
+- [x] `ColumnSide.both`, par défaut ; « Gauche / Les deux / Droite » dans les réglages
+- [x] `Layout` : cadre sur les deux bandes, chaque côté borné à son bord d'écran, trou au niveau de la bande, compte à rebours à gauche (5 tests)
+- [x] Texte coupé par la bande avec `exclusionPaths` (TextKit 1)
+- [x] Commandes sur une ligne en haut
+- [x] Test UI : choix « Les deux » dans les réglages
+- [x] 34 tests unitaires et 2 tests UI passent, zéro warning ; capture `simctl` vérifiée
+- [ ] Sur l'iPhone : lire une ligne coupée par la Pocket, et juger si ça se voit moins qu'avec une seule colonne
+
+## Largeur par côté, interligne, texte plus petit, Markdown (demande du 27/09, deuxième test)
+
+- [x] Largeur propre à chaque côté, réglée en glissant le bord extérieur (poignée blanche) ; le curseur de largeur disparaît
+- [x] Interligne de 1,0 à 2,0 (1,4 par défaut)
+- [x] Taille du texte à partir de 12 pt
+- [x] Markdown (`>`, `#`, tirets, `**`, `__`) retiré à l'affichage et dans le titre ; les symboles seuls ne comptent plus comme des mots
+- [x] Panneau des réglages en deux blocs en haut : il cachait la poignée de la colonne gauche
+- [x] 40 tests unitaires et 2 tests UI passent sur iOS 26.4.1 et 18.3.1, zéro warning ; capture `simctl` vérifiée
+- [ ] Sur l'iPhone : régler chaque côté, l'interligne, un texte à 12 pt
+
 ## À vérifier à la main (iPhone)
 
 - [ ] Défilement fluide à 120 Hz, sans saccade

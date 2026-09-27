@@ -7,7 +7,9 @@ struct PrompterView: View {
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage(Setting.wordsPerMinuteKey) private var wordsPerMinute = Setting.wordsPerMinute
     @AppStorage(Setting.fontSizeKey) private var fontSize = Setting.fontSize
-    @AppStorage(Setting.columnWidthKey) private var columnWidth = Setting.columnWidth
+    @AppStorage(Setting.lineSpacingKey) private var lineSpacing = Setting.lineSpacing
+    @AppStorage(Setting.leftColumnWidthKey) private var leftColumnWidth = Setting.columnWidth
+    @AppStorage(Setting.rightColumnWidthKey) private var rightColumnWidth = Setting.columnWidth
     @AppStorage(Setting.columnSideKey) private var columnSide = Setting.columnSide
     @AppStorage(Setting.bandCenterKey) private var bandCenter = Setting.bandCenter
     @AppStorage(Setting.bandWidthKey) private var bandWidth = Setting.bandWidth
@@ -19,7 +21,6 @@ struct PrompterView: View {
     @State private var countdown: Task<Void, Never>?
     @State private var resetToken = 0
     @State private var isSetupShown = false
-    @State private var screen = CGSize.zero
 
     private enum Phase {
         case ready
@@ -34,40 +35,38 @@ struct PrompterView: View {
             GeometryReader { proxy in
                 let size = proxy.size
                 let band = Layout.bandFrame(center: bandCenter, width: bandWidth, in: size)
-                let column = Layout.columnFrame(band: band, side: columnSide, width: columnWidth, in: size)
+                let column = Layout.columnFrame(
+                    band: band, side: columnSide, leftWidth: leftColumnWidth, rightWidth: rightColumnWidth, in: size)
                 let readingY = Layout.readingLineY(readingLine, height: size.height)
                 ScrollingText(
-                    text: text, fontSize: fontSize, columnFrame: column, readingY: readingY,
+                    text: text, fontSize: fontSize, lineSpacing: lineSpacing, columnFrame: column,
+                    hole: Layout.hole(band: band, column: column, side: columnSide), readingY: readingY,
                     wordsPerMinute: wordsPerMinute, isScrolling: phase == .scrolling, resetToken: resetToken,
                     onTap: tap, onEnd: { phase = .ended })
                 Capsule()
                     .fill(.gray)
                     .frame(width: 4, height: fontSize)
-                    .position(x: columnSide == .right ? column.maxX + 8 : column.minX - 8, y: readingY)
+                    .position(x: columnSide == .left ? column.minX - 8 : column.maxX + 8, y: readingY)
                 if phase == .countdown {
                     Text("\(count)")
                         .font(.system(size: fontSize * 2, weight: .bold))
                         .foregroundStyle(.white)
-                        .position(x: column.midX, y: readingY)
+                        .position(x: Layout.countdownX(band: band, column: column, side: columnSide), y: readingY)
                 }
                 if isSetupShown {
                     SetupHandles(
-                        size: size, band: band, readingY: readingY,
-                        bandCenter: $bandCenter, bandWidth: $bandWidth, readingLine: $readingLine)
+                        size: size, band: band, column: column, side: columnSide, readingY: readingY,
+                        bandCenter: $bandCenter, bandWidth: $bandWidth,
+                        leftColumnWidth: $leftColumnWidth, rightColumnWidth: $rightColumnWidth,
+                        readingLine: $readingLine)
                 }
             }
             .ignoresSafeArea()
-            .onGeometryChange(for: CGSize.self) { $0.size } action: { screen = $0 }
 
             if isSetupShown {
-                SetupPanel(
-                    columnSide: $columnSide, columnWidth: $columnWidth, fontSize: $fontSize,
-                    maxColumnWidth: maxColumnWidth) {
-                        isSetupShown = false
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity,
-                           alignment: columnSide == .right ? .leading : .trailing)
-                    .padding()
+                SetupPanel(columnSide: $columnSide, fontSize: $fontSize, lineSpacing: $lineSpacing) {
+                    isSetupShown = false
+                }
             } else if phase != .scrolling && phase != .countdown {
                 controls
             }
@@ -89,43 +88,34 @@ struct PrompterView: View {
         }
     }
 
-    private var maxColumnWidth: Double {
-        let band = Layout.bandFrame(center: bandCenter, width: bandWidth, in: screen)
-        return Layout.stripWidth(band: band, side: columnSide, in: screen)
-    }
-
-    // In the strip on the other side of the Pocket, so that the controls never cover the text.
+    // At the top: the fade hides the text there, so the controls never cover what the user reads.
     private var controls: some View {
-        VStack(alignment: columnSide == .right ? .leading : .trailing, spacing: 12) {
-            HStack {
-                Button("Fermer", systemImage: "xmark") {
-                    dismiss()
-                }
-                Button("Réglages", systemImage: "slider.horizontal.3") {
-                    isSetupShown = true
-                }
+        HStack {
+            Button("Fermer", systemImage: "xmark") {
+                dismiss()
             }
-            Spacer()
+            Button("Réglages", systemImage: "slider.horizontal.3") {
+                isSetupShown = true
+            }
             Button("Revenir au début", systemImage: "backward.end.fill") {
                 resetToken += 1
                 phase = .ready
             }
-            HStack {
-                Button("Moins vite", systemImage: "minus") {
-                    changeSpeed(by: -Setting.wordsPerMinuteStep)
-                }
-                Text("\(wordsPerMinute) mots/min")
-                    .monospacedDigit()
-                    .foregroundStyle(.white)
-                Button("Plus vite", systemImage: "plus") {
-                    changeSpeed(by: Setting.wordsPerMinuteStep)
-                }
+            Spacer()
+            Button("Moins vite", systemImage: "minus") {
+                changeSpeed(by: -Setting.wordsPerMinuteStep)
+            }
+            Text("\(wordsPerMinute) mots/min")
+                .monospacedDigit()
+                .foregroundStyle(.white)
+            Button("Plus vite", systemImage: "plus") {
+                changeSpeed(by: Setting.wordsPerMinuteStep)
             }
         }
         .labelStyle(.iconOnly)
         .buttonStyle(.bordered)
         .tint(.white)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: columnSide == .right ? .leading : .trailing)
+        .frame(maxHeight: .infinity, alignment: .top)
         .padding()
     }
 
