@@ -2,116 +2,204 @@ import CoreGraphics
 import Testing
 @testable import Eyeline
 
-// An iPhone 16 Pro in landscape.
+// An iPhone 16 Pro in landscape, then in portrait.
 private let screen = CGSize(width: 874, height: 402)
+private let portraitScreen = CGSize(width: 402, height: 874)
 private let centredBand = CGRect(x: 297, y: 0, width: 280, height: 402)
+private let portraitBand = CGRect(x: 0, y: 337, width: 402, height: 200)
 
 struct BandTests {
-    @Test func defaultBandIsCentred() {
-        #expect(Layout.bandFrame(center: 0.5, width: 280, in: screen) == centredBand)
+    @Test func defaultLandscapeBandIsVerticalAndCentred() {
+        #expect(Layout.bandFrame(.landscape, in: screen) == centredBand)
+    }
+
+    @Test func topAndBottomPositionsGetAHorizontalBand() {
+        let calibration = Calibration(position: .top, bandCenter: 0.5, bandThickness: 200)
+        #expect(Layout.bandFrame(calibration, in: portraitScreen) == portraitBand)
     }
 
     @Test func bandStaysOnScreen() {
-        #expect(Layout.bandFrame(center: 0.99, width: 280, in: screen).minX == 594)
-        #expect(Layout.bandFrame(center: 0.01, width: 280, in: screen).minX == 0)
+        #expect(Layout.bandFrame(Calibration(bandCenter: 0.99), in: screen).minX == 594)
+        #expect(Layout.bandFrame(Calibration(bandCenter: 0.01), in: screen).minX == 0)
     }
 
-    @Test func bandWidthIsClamped() {
-        #expect(Layout.bandFrame(center: 0.5, width: 5, in: screen).width == 20)
-        #expect(Layout.bandFrame(center: 0.5, width: 1000, in: screen).width == 437)
+    @Test func bandThicknessIsClampedToHalfTheScreen() {
+        #expect(Layout.bandFrame(Calibration(bandThickness: 5), in: screen).width == 20)
+        #expect(Layout.bandFrame(Calibration(bandThickness: 1000), in: screen).width == 437)
+        #expect(Layout.bandFrame(Calibration(position: .top, bandThickness: 1000), in: screen).height == 201)
     }
 
-    @Test func draggingTheLeadingEdgeKeepsTheTrailingEdge() {
-        let moved = Layout.draggingEdge(.leading, of: centredBand, by: -40, in: screen)
-        #expect(moved.width == 320)
-        #expect(moved.center * screen.width == 417)
+    @Test func draggingOneEdgeKeepsTheOtherEdge() {
+        let leading = Layout.draggingBandEdge(.leading, of: centredBand, by: -40, in: screen)
+        #expect(leading.thickness == 320)
+        #expect(leading.center * screen.width == 417)
+        let trailing = Layout.draggingBandEdge(.trailing, of: centredBand, by: 30, in: screen)
+        #expect(trailing.thickness == 310)
+        #expect(trailing.center * screen.width == 452)
     }
 
-    @Test func draggingTheTrailingEdgeKeepsTheLeadingEdge() {
-        let moved = Layout.draggingEdge(.trailing, of: centredBand, by: 30, in: screen)
-        #expect(moved.width == 310)
-        #expect(moved.center * screen.width == 452)
+    @Test func draggingTheTopEdgeOfAHorizontalBand() {
+        let moved = Layout.draggingBandEdge(.top, of: portraitBand, by: -37, in: portraitScreen)
+        #expect(moved.thickness == 237)
+        #expect(moved.center * portraitScreen.height == 418.5)
     }
 
     @Test func anEdgeCannotCrossTheOtherOne() {
-        #expect(Layout.draggingEdge(.leading, of: centredBand, by: 500, in: screen).width == 20)
-        #expect(Layout.draggingEdge(.trailing, of: centredBand, by: -500, in: screen).width == 20)
+        #expect(Layout.draggingBandEdge(.leading, of: centredBand, by: 500, in: screen).thickness == 20)
+        #expect(Layout.draggingBandEdge(.trailing, of: centredBand, by: -500, in: screen).thickness == 20)
     }
 
     @Test func anEdgeStopsAtTheScreenEdge() {
-        #expect(Layout.draggingEdge(.leading, of: centredBand, by: -1000, in: screen).width == 577)
-        #expect(Layout.draggingEdge(.trailing, of: centredBand, by: 1000, in: screen).width == 577)
+        #expect(Layout.draggingBandEdge(.leading, of: centredBand, by: -1000, in: screen).thickness == 577)
+        #expect(Layout.draggingBandEdge(.bottom, of: portraitBand, by: 1000, in: portraitScreen).thickness == 537)
     }
 }
 
-struct ColumnTests {
-    @Test func rightColumnTouchesTheBand() {
-        let column = Layout.columnFrame(band: centredBand, side: .right, leftWidth: 90, rightWidth: 150, in: screen)
-        #expect(column == CGRect(x: 577, y: 0, width: 150, height: 402))
+struct TextFrameTests {
+    @Test func rightTextTouchesTheBand() {
+        let calibration = Calibration(position: .right, leftWidth: 90, rightWidth: 150)
+        let text = Layout.textFrame(calibration, band: centredBand, in: screen)
+        #expect(text == CGRect(x: 577, y: 0, width: 150, height: 402))
     }
 
-    @Test func leftColumnTouchesTheBand() {
-        let column = Layout.columnFrame(band: centredBand, side: .left, leftWidth: 150, rightWidth: 90, in: screen)
-        #expect(column == CGRect(x: 147, y: 0, width: 150, height: 402))
+    @Test func leftTextTouchesTheBand() {
+        let calibration = Calibration(position: .left, leftWidth: 150, rightWidth: 90)
+        let text = Layout.textFrame(calibration, band: centredBand, in: screen)
+        #expect(text == CGRect(x: 147, y: 0, width: 150, height: 402))
     }
 
-    @Test func columnTakesTheFullStripWhenTheStripIsNarrower() {
-        let right = Layout.columnFrame(band: centredBand, side: .right, leftWidth: 400, rightWidth: 400, in: screen)
-        let left = Layout.columnFrame(band: centredBand, side: .left, leftWidth: 400, rightWidth: 400, in: screen)
+    @Test func textTakesTheFullStripWhenTheStripIsNarrower() {
+        let right = Layout.textFrame(Calibration(position: .right, rightWidth: 400), band: centredBand, in: screen)
+        let left = Layout.textFrame(Calibration(position: .left, leftWidth: 400), band: centredBand, in: screen)
         #expect(right.width == 297)
         #expect(left.minX == 0)
     }
 
-    @Test func twoSidedColumnSpansBothStripsAndTheBand() {
-        let column = Layout.columnFrame(band: centredBand, side: .both, leftWidth: 150, rightWidth: 150, in: screen)
-        #expect(column == CGRect(x: 147, y: 0, width: 580, height: 402))
+    @Test func leftAndRightTextSpansBothStripsAndTheBand() {
+        let calibration = Calibration(position: .leftAndRight, leftWidth: 100, rightWidth: 200)
+        let text = Layout.textFrame(calibration, band: centredBand, in: screen)
+        #expect(text == CGRect(x: 197, y: 0, width: 580, height: 402))
     }
 
-    @Test func eachSideHasItsOwnWidth() {
-        let column = Layout.columnFrame(band: centredBand, side: .both, leftWidth: 100, rightWidth: 200, in: screen)
-        #expect(column == CGRect(x: 197, y: 0, width: 580, height: 402))
-    }
-
-    @Test func eachSideOfATwoSidedColumnStopsAtItsOwnScreenEdge() {
+    @Test func eachSideStopsAtItsOwnScreenEdge() {
         // Off-centre band: the left strip is 197 pt wide, the right strip 397 pt.
         let band = CGRect(x: 197, y: 0, width: 280, height: 402)
-        let column = Layout.columnFrame(band: band, side: .both, leftWidth: 300, rightWidth: 300, in: screen)
-        #expect(column == CGRect(x: 0, y: 0, width: 777, height: 402))
+        let calibration = Calibration(position: .leftAndRight, leftWidth: 300, rightWidth: 300)
+        #expect(Layout.textFrame(calibration, band: band, in: screen) == CGRect(x: 0, y: 0, width: 777, height: 402))
     }
 
-    @Test func textFlowsAroundTheBandInATwoSidedColumn() {
-        let column = CGRect(x: 147, y: 0, width: 580, height: 402)
-        #expect(Layout.hole(band: centredBand, column: column, side: .both) == 150...430)
+    @Test(arguments: [
+        (TextPosition.top, CGRect(x: 51, y: 0, width: 250, height: 337)),
+        (TextPosition.bottom, CGRect(x: 51, y: 537, width: 250, height: 337)),
+        (TextPosition.topAndBottom, CGRect(x: 51, y: 0, width: 250, height: 874)),
+    ])
+    func withAHorizontalBandTheWidthsCountFromTheScreenCentre(position: TextPosition, expected: CGRect) {
+        let calibration = Calibration(position: position, leftWidth: 150, rightWidth: 100)
+        #expect(Layout.textFrame(calibration, band: portraitBand, in: portraitScreen) == expected)
     }
 
-    @Test func aOneSidedColumnHasNoHole() {
-        let column = CGRect(x: 577, y: 0, width: 150, height: 402)
-        #expect(Layout.hole(band: centredBand, column: column, side: .right) == nil)
-        #expect(Layout.hole(band: centredBand, column: column, side: .left) == nil)
+    @Test func draggingATextEdgeOutwardWidensTheText() {
+        let text = CGRect(x: 147, y: 0, width: 580, height: 402)
+        let leading = Layout.textWidth(
+            dragging: .leading, of: text, by: -50, band: centredBand, position: .leftAndRight, in: screen)
+        let trailing = Layout.textWidth(
+            dragging: .trailing, of: text, by: 50, band: centredBand, position: .leftAndRight, in: screen)
+        #expect(leading == 200)
+        #expect(trailing == 200)
+    }
+
+    @Test func aTextEdgeStopsAtTheMinimumAndAtTheScreenEdge() {
+        let text = CGRect(x: 147, y: 0, width: 580, height: 402)
+        let narrowest = Layout.textWidth(
+            dragging: .leading, of: text, by: 500, band: centredBand, position: .leftAndRight, in: screen)
+        let widest = Layout.textWidth(
+            dragging: .trailing, of: text, by: 500, band: centredBand, position: .leftAndRight, in: screen)
+        let portraitWidest = Layout.textWidth(
+            dragging: .trailing, of: CGRect(x: 51, y: 0, width: 250, height: 337), by: 500,
+            band: portraitBand, position: .top, in: portraitScreen)
+        #expect(narrowest == 60)
+        #expect(widest == 297)
+        #expect(portraitWidest == 201)
+    }
+
+    @Test func onlyLeftAndRightTextFlowsAroundTheBand() {
+        let text = CGRect(x: 147, y: 0, width: 580, height: 402)
+        #expect(Layout.hole(band: centredBand, text: text, position: .leftAndRight) == 150...430)
+        #expect(Layout.hole(band: centredBand, text: text, position: .right) == nil)
+        #expect(Layout.hole(band: portraitBand, text: text, position: .topAndBottom) == nil)
     }
 
     @Test func countdownShowsWhereEachLineStarts() {
         let twoSided = CGRect(x: 147, y: 0, width: 580, height: 402)
-        #expect(Layout.countdownX(band: centredBand, column: twoSided, side: .both) == 222)
+        #expect(Layout.countdownX(band: centredBand, text: twoSided, position: .leftAndRight) == 222)
         let right = CGRect(x: 577, y: 0, width: 150, height: 402)
-        #expect(Layout.countdownX(band: centredBand, column: right, side: .right) == 652)
+        #expect(Layout.countdownX(band: centredBand, text: right, position: .right) == 652)
     }
+}
 
-    @Test func draggingAColumnEdgeOutwardWidensTheColumn() {
-        #expect(Layout.columnWidth(dragging: .leading, from: 150, by: -50, band: centredBand, in: screen) == 200)
-        #expect(Layout.columnWidth(dragging: .trailing, from: 150, by: 50, band: centredBand, in: screen) == 200)
-    }
-
-    @Test func aColumnEdgeStopsAtTheMinimumAndAtTheScreenEdge() {
-        #expect(Layout.columnWidth(dragging: .leading, from: 150, by: 500, band: centredBand, in: screen) == 60)
-        #expect(Layout.columnWidth(dragging: .leading, from: 150, by: -500, band: centredBand, in: screen) == 297)
-        #expect(Layout.columnWidth(dragging: .trailing, from: 150, by: 500, band: centredBand, in: screen) == 297)
-    }
+struct ReadingLineTests {
+    private let fullHeight = CGRect(x: 0, y: 0, width: 874, height: 400)
 
     @Test func readingLineIsClamped() {
-        #expect(Layout.readingLineY(0.5, height: 402) == 201)
-        #expect(Layout.readingLineY(0.01, height: 400) == 40)
+        let middle = Layout.readingLineY(
+            0.5, text: fullHeight, band: centredBand, position: .leftAndRight, height: 400, lineHeight: 40)
+        let high = Layout.readingLineY(
+            0.01, text: fullHeight, band: centredBand, position: .leftAndRight, height: 400, lineHeight: 40)
+        #expect(middle == 200)
+        #expect(high == 40)
         #expect(Layout.readingLine(atY: 390, height: 400) == 0.9)
+    }
+
+    // Text above and below the band runs behind the Pocket: the line read goes to the nearest side.
+    @Test func theLineReadIsNeverBehindThePocket() {
+        let full = CGRect(x: 0, y: 0, width: 402, height: 874)
+        let nearTop = Layout.readingLineY(
+            0.45, text: full, band: portraitBand, position: .topAndBottom, height: 874, lineHeight: 40)
+        let nearBottom = Layout.readingLineY(
+            0.55, text: full, band: portraitBand, position: .topAndBottom, height: 874, lineHeight: 40)
+        #expect(nearTop == 317)
+        #expect(nearBottom == 557)
+    }
+
+    // Half a line inside: the line read is never cut by the band.
+    @Test func theLineReadStaysWholeInsideTheText() {
+        let above = CGRect(x: 51, y: 0, width: 250, height: 337)
+        let below = CGRect(x: 51, y: 537, width: 250, height: 337)
+        let lowest = Layout.readingLineY(
+            0.6, text: above, band: portraitBand, position: .top, height: 874, lineHeight: 40)
+        let highest = Layout.readingLineY(
+            0.3, text: below, band: portraitBand, position: .bottom, height: 874, lineHeight: 40)
+        #expect(lowest == 317)
+        #expect(highest == 557)
+    }
+}
+
+struct SetupHandleTests {
+    private let text = CGRect(x: 147, y: 0, width: 580, height: 402)
+
+    private func handle(at point: CGPoint) -> SetupHandle? {
+        Layout.handle(at: point, band: centredBand, text: text, readingY: 201, position: .leftAndRight)
+    }
+
+    @Test func aTouchTakesTheNearestHandle() {
+        #expect(handle(at: CGPoint(x: 300, y: 50)) == .bandEdge(.leading))
+        #expect(handle(at: CGPoint(x: 150, y: 100)) == .textEdge(.leading))
+        #expect(handle(at: CGPoint(x: 500, y: 210)) == .readingLine)
+        #expect(handle(at: CGPoint(x: 500, y: 100)) == nil)
+    }
+
+    @Test func theReadingLineWinsATie() {
+        let top = CGRect(x: 51, y: 0, width: 250, height: 337)
+        let handle = Layout.handle(
+            at: CGPoint(x: 200, y: 340), band: portraitBand, text: top, readingY: 337, position: .top)
+        #expect(handle == .readingLine)
+    }
+
+    @Test func textEdgesOnlyTakeTouchesBesideTheText() {
+        let top = CGRect(x: 51, y: 0, width: 250, height: 337)
+        let handle = Layout.handle(
+            at: CGPoint(x: 52, y: 700), band: portraitBand, text: top, readingY: 200, position: .top)
+        #expect(handle == nil)
     }
 }
 

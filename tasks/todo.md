@@ -116,6 +116,16 @@
 - [x] Le fondu ne cache plus que les lignes déjà lues ; le texte à venir reste visible jusqu'en bas
 - [x] 41 tests unitaires et 2 tests UI passent ; capture `simctl` avec texte 16 pt, interligne 1,1, ligne de lecture à 25 %
 
+## Portrait et six positions (27/09)
+
+- [x] L'app tourne : portrait et paysage ; réglage propre à chaque orientation
+- [x] Six positions : à gauche, à droite, à gauche et à droite, en haut, en bas, en haut et en bas ; bande horizontale pour haut et bas
+- [x] Ligne de lecture jaune, toujours entière dans le texte, jamais derrière la Pocket
+- [x] Un seul geste de glissement prend la poignée la plus proche
+- [x] « Lire » ferme le clavier
+- [x] 49 tests unitaires et 3 tests UI passent sur iOS 26.4.1 et 18.3.1 ; tour de captures des six positions dans les deux orientations, tailles et interlignes extrêmes
+- [ ] Sur l'iPhone : portrait derrière la Pocket, position « En haut » puis « En bas »
+
 ## À vérifier à la main (iPhone)
 
 - [ ] Défilement fluide à 120 Hz, sans saccade
