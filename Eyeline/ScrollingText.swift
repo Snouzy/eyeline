@@ -4,7 +4,9 @@ import UIKit
 struct ScrollingText: UIViewRepresentable {
     let text: String
     let fontSize: Double
+    let lineSpacing: Double
     let columnFrame: CGRect
+    let hole: ClosedRange<Double>?
     let readingY: Double
     let wordsPerMinute: Int
     let isScrolling: Bool
@@ -20,7 +22,8 @@ struct ScrollingText: UIViewRepresentable {
         canvas.onTap = onTap
         canvas.onEnd = onEnd
         canvas.update(
-            text: text, fontSize: fontSize, columnFrame: columnFrame, readingY: readingY,
+            text: text, fontSize: fontSize, lineSpacing: lineSpacing, columnFrame: columnFrame, hole: hole,
+            readingY: readingY,
             wordsPerMinute: wordsPerMinute, isScrolling: isScrolling, resetToken: resetToken)
     }
 }
@@ -37,6 +40,8 @@ final class PrompterCanvas: UIView {
 
     private var text = ""
     private var fontSize = 0.0
+    private var lineSpacing = 0.0
+    private var hole: ClosedRange<Double>?
     private var readingY = 0.0
     private var resetToken = 0
     private var wordCount = 0
@@ -55,7 +60,7 @@ final class PrompterCanvas: UIView {
         textView.textContainer.lineFragmentPadding = 0
         textView.contentInsetAdjustmentBehavior = .never
         textView.showsVerticalScrollIndicator = false
-        fade.colors = [UIColor.clear.cgColor, UIColor.black.cgColor, UIColor.black.cgColor, UIColor.clear.cgColor]
+        fade.colors = [UIColor.clear.cgColor, UIColor.black.cgColor]
         column.layer.mask = fade
         column.addSubview(textView)
         addSubview(column)
@@ -68,13 +73,16 @@ final class PrompterCanvas: UIView {
     }
 
     func update(
-        text: String, fontSize: Double, columnFrame: CGRect, readingY: Double,
-        wordsPerMinute: Int, isScrolling: Bool, resetToken: Int
+        text: String, fontSize: Double, lineSpacing: Double, columnFrame: CGRect, hole: ClosedRange<Double>?,
+        readingY: Double, wordsPerMinute: Int, isScrolling: Bool, resetToken: Int
     ) {
-        if text != self.text || fontSize != self.fontSize || columnFrame != column.frame || readingY != self.readingY {
+        if text != self.text || fontSize != self.fontSize || lineSpacing != self.lineSpacing
+            || columnFrame != column.frame || hole != self.hole || readingY != self.readingY {
             let progress = self.progress
             self.text = text
             self.fontSize = fontSize
+            self.lineSpacing = lineSpacing
+            self.hole = hole
             self.readingY = readingY
             column.frame = columnFrame
             textView.frame = column.bounds
@@ -109,7 +117,7 @@ final class PrompterCanvas: UIView {
 
     private func layoutText() {
         let font = UIFont.systemFont(ofSize: fontSize, weight: .semibold)
-        let lineHeight = Layout.lineHeight(fontSize: fontSize)
+        let lineHeight = Layout.lineHeight(fontSize: fontSize, spacing: lineSpacing)
         let paragraph = NSMutableParagraphStyle()
         paragraph.minimumLineHeight = lineHeight
         paragraph.maximumLineHeight = lineHeight
@@ -120,6 +128,10 @@ final class PrompterCanvas: UIView {
             // A fixed line height puts the extra space above the glyphs. This centres them in the line.
             .baselineOffset: (lineHeight - font.lineHeight) / 2,
         ])
+        // Taller than any script, so that the hole cuts every line.
+        textView.textContainer.exclusionPaths = hole.map {
+            [UIBezierPath(rect: CGRect(x: $0.lowerBound, y: 0, width: $0.upperBound - $0.lowerBound, height: 1e7))]
+        } ?? []
         textView.layoutManager.ensureLayout(for: textView.textContainer)
         textHeight = textView.layoutManager.usedRect(for: textView.textContainer).height
         wordCount = Layout.wordCount(text)

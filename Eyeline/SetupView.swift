@@ -4,12 +4,17 @@ import SwiftUI
 struct SetupHandles: View {
     let size: CGSize
     let band: CGRect
+    let column: CGRect
+    let side: ColumnSide
     let readingY: Double
     @Binding var bandCenter: Double
     @Binding var bandWidth: Double
+    @Binding var leftColumnWidth: Double
+    @Binding var rightColumnWidth: Double
     @Binding var readingLine: Double
 
     @State private var bandAtDragStart: CGRect?
+    @State private var widthAtDragStart: Double?
     @State private var lineAtDragStart: Double?
 
     var body: some View {
@@ -21,19 +26,29 @@ struct SetupHandles: View {
                 .fill(.orange.opacity(0.35))
                 .frame(width: band.width, height: size.height)
                 .position(x: band.midX, y: size.height / 2)
-            edge(.leading, at: band.minX)
-            edge(.trailing, at: band.maxX)
+            if side != .right {
+                columnEdge(.leading, at: column.minX, width: $leftColumnWidth, shown: band.minX - column.minX)
+            }
+            if side != .left {
+                columnEdge(.trailing, at: column.maxX, width: $rightColumnWidth, shown: column.maxX - band.maxX)
+            }
+            bandEdge(.leading, at: band.minX)
+            bandEdge(.trailing, at: band.maxX)
             line
         }
     }
 
-    private func edge(_ edge: BandEdge, at x: Double) -> some View {
+    private func handle(at x: Double, color: Color) -> some View {
         Rectangle()
-            .fill(.orange)
+            .fill(color)
             .frame(width: 3)
             .frame(width: 44, height: size.height)
             .contentShape(Rectangle())
             .position(x: x, y: size.height / 2)
+    }
+
+    private func bandEdge(_ edge: HorizontalEdge, at x: Double) -> some View {
+        handle(at: x, color: .orange)
             .gesture(
                 DragGesture()
                     .onChanged { value in
@@ -45,6 +60,23 @@ struct SetupHandles: View {
                     }
                     .onEnded { _ in
                         bandAtDragStart = nil
+                    }
+            )
+    }
+
+    // The drag starts from the shown width: on a narrow strip it is smaller than the stored one.
+    private func columnEdge(_ edge: HorizontalEdge, at x: Double, width: Binding<Double>, shown: Double) -> some View {
+        handle(at: x, color: .white)
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        let start = widthAtDragStart ?? shown
+                        widthAtDragStart = start
+                        width.wrappedValue = Layout.columnWidth(
+                            dragging: edge, from: start, by: value.translation.width, band: band, in: size)
+                    }
+                    .onEnded { _ in
+                        widthAtDragStart = nil
                     }
             )
     }
@@ -70,31 +102,42 @@ struct SetupHandles: View {
     }
 }
 
+// At the top, in two small blocks: the handles run the full screen height, so they stay free below.
 struct SetupPanel: View {
     @Binding var columnSide: ColumnSide
-    @Binding var columnWidth: Double
     @Binding var fontSize: Double
-    let maxColumnWidth: Double
+    @Binding var lineSpacing: Double
     let onDone: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Picker("Côté du texte", selection: $columnSide) {
-                Text("Gauche").tag(ColumnSide.left)
-                Text("Droite").tag(ColumnSide.right)
+        HStack(alignment: .top) {
+            VStack(alignment: .leading) {
+                Picker("Côté du texte", selection: $columnSide) {
+                    Text("Gauche").tag(ColumnSide.left)
+                    Text("Les deux").tag(ColumnSide.both)
+                    Text("Droite").tag(ColumnSide.right)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 240)
+                Button("OK", action: onDone)
+                    .buttonStyle(.borderedProminent)
             }
-            .pickerStyle(.segmented)
-            Text("Largeur de la colonne")
-            Slider(value: $columnWidth, in: Setting.minColumnWidth...max(maxColumnWidth, Setting.minColumnWidth + 1))
-            Text("Taille du texte")
-            Slider(value: $fontSize, in: Setting.fontSizeRange)
-            Button("OK", action: onDone)
-                .buttonStyle(.borderedProminent)
+            .padding(10)
+            .background(.regularMaterial, in: .rect(cornerRadius: 12))
+            Spacer()
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Taille du texte")
+                Slider(value: $fontSize, in: Setting.fontSizeRange)
+                Text("Interligne")
+                Slider(value: $lineSpacing, in: Setting.lineSpacingRange)
+            }
+            .font(.caption)
+            .frame(width: 200)
+            .padding(10)
+            .background(.regularMaterial, in: .rect(cornerRadius: 12))
         }
-        .font(.callout)
-        .padding()
-        .frame(width: 220)
-        .background(.regularMaterial, in: .rect(cornerRadius: 16))
         .environment(\.colorScheme, .dark)
+        .frame(maxHeight: .infinity, alignment: .top)
+        .padding()
     }
 }

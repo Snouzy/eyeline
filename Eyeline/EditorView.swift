@@ -18,7 +18,7 @@ struct EditorView: View {
                 .disabled(Layout.wordCount(text) == 0)
             }
             .fullScreenCover(isPresented: $isReading) {
-                PrompterView(text: text)
+                PrompterView(text: Layout.plainText(text))
             }
             .onAppear {
                 text = store.scripts.first { $0.id == id }?.text ?? ""

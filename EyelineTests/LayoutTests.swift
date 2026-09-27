@@ -46,18 +46,66 @@ struct BandTests {
 
 struct ColumnTests {
     @Test func rightColumnTouchesTheBand() {
-        let column = Layout.columnFrame(band: centredBand, side: .right, width: 150, in: screen)
+        let column = Layout.columnFrame(band: centredBand, side: .right, leftWidth: 90, rightWidth: 150, in: screen)
         #expect(column == CGRect(x: 577, y: 0, width: 150, height: 402))
     }
 
     @Test func leftColumnTouchesTheBand() {
-        let column = Layout.columnFrame(band: centredBand, side: .left, width: 150, in: screen)
+        let column = Layout.columnFrame(band: centredBand, side: .left, leftWidth: 150, rightWidth: 90, in: screen)
         #expect(column == CGRect(x: 147, y: 0, width: 150, height: 402))
     }
 
     @Test func columnTakesTheFullStripWhenTheStripIsNarrower() {
-        #expect(Layout.columnFrame(band: centredBand, side: .right, width: 400, in: screen).width == 297)
-        #expect(Layout.columnFrame(band: centredBand, side: .left, width: 400, in: screen).minX == 0)
+        let right = Layout.columnFrame(band: centredBand, side: .right, leftWidth: 400, rightWidth: 400, in: screen)
+        let left = Layout.columnFrame(band: centredBand, side: .left, leftWidth: 400, rightWidth: 400, in: screen)
+        #expect(right.width == 297)
+        #expect(left.minX == 0)
+    }
+
+    @Test func twoSidedColumnSpansBothStripsAndTheBand() {
+        let column = Layout.columnFrame(band: centredBand, side: .both, leftWidth: 150, rightWidth: 150, in: screen)
+        #expect(column == CGRect(x: 147, y: 0, width: 580, height: 402))
+    }
+
+    @Test func eachSideHasItsOwnWidth() {
+        let column = Layout.columnFrame(band: centredBand, side: .both, leftWidth: 100, rightWidth: 200, in: screen)
+        #expect(column == CGRect(x: 197, y: 0, width: 580, height: 402))
+    }
+
+    @Test func eachSideOfATwoSidedColumnStopsAtItsOwnScreenEdge() {
+        // Off-centre band: the left strip is 197 pt wide, the right strip 397 pt.
+        let band = CGRect(x: 197, y: 0, width: 280, height: 402)
+        let column = Layout.columnFrame(band: band, side: .both, leftWidth: 300, rightWidth: 300, in: screen)
+        #expect(column == CGRect(x: 0, y: 0, width: 777, height: 402))
+    }
+
+    @Test func textFlowsAroundTheBandInATwoSidedColumn() {
+        let column = CGRect(x: 147, y: 0, width: 580, height: 402)
+        #expect(Layout.hole(band: centredBand, column: column, side: .both) == 150...430)
+    }
+
+    @Test func aOneSidedColumnHasNoHole() {
+        let column = CGRect(x: 577, y: 0, width: 150, height: 402)
+        #expect(Layout.hole(band: centredBand, column: column, side: .right) == nil)
+        #expect(Layout.hole(band: centredBand, column: column, side: .left) == nil)
+    }
+
+    @Test func countdownShowsWhereEachLineStarts() {
+        let twoSided = CGRect(x: 147, y: 0, width: 580, height: 402)
+        #expect(Layout.countdownX(band: centredBand, column: twoSided, side: .both) == 222)
+        let right = CGRect(x: 577, y: 0, width: 150, height: 402)
+        #expect(Layout.countdownX(band: centredBand, column: right, side: .right) == 652)
+    }
+
+    @Test func draggingAColumnEdgeOutwardWidensTheColumn() {
+        #expect(Layout.columnWidth(dragging: .leading, from: 150, by: -50, band: centredBand, in: screen) == 200)
+        #expect(Layout.columnWidth(dragging: .trailing, from: 150, by: 50, band: centredBand, in: screen) == 200)
+    }
+
+    @Test func aColumnEdgeStopsAtTheMinimumAndAtTheScreenEdge() {
+        #expect(Layout.columnWidth(dragging: .leading, from: 150, by: 500, band: centredBand, in: screen) == 60)
+        #expect(Layout.columnWidth(dragging: .leading, from: 150, by: -500, band: centredBand, in: screen) == 297)
+        #expect(Layout.columnWidth(dragging: .trailing, from: 150, by: 500, band: centredBand, in: screen) == 297)
     }
 
     @Test func readingLineIsClamped() {
@@ -86,9 +134,17 @@ struct ScrollTests {
         #expect(Layout.offsetRange(textHeight: 48, lineHeight: 48, readingY: 200) == -176...(-176))
     }
 
+    @Test func lineHeightFollowsTheSpacing() {
+        #expect(Layout.lineHeight(fontSize: 30, spacing: 1.5) == 45)
+    }
+
+    @Test func onlyTheLinesAlreadyReadFadeOut() {
+        // One line above the reading line stays visible. Below it, the text stays visible to the bottom.
+        #expect(Layout.fadeStops(readingY: 200, lineHeight: 40, height: 400) == [0.15, 0.35])
+    }
+
     @Test func fadeStopsStayBetweenZeroAndOne() {
-        let stops = Layout.fadeStops(readingY: 200, lineHeight: 40, height: 400)
-        #expect(stops == [0.15, 0.35, 0.85, 1])
+        #expect(Layout.fadeStops(readingY: 50, lineHeight: 40, height: 400) == [0, 0])
     }
 }
 
@@ -98,9 +154,19 @@ struct TextTests {
         #expect(Layout.wordCount(" \n ") == 0)
     }
 
+    @Test func tokensWithoutALetterOrADigitAreNotWords() {
+        #expect(Layout.wordCount("> Dis-moi - **Mise en image** : 5") == 5)
+    }
+
+    @Test func plainTextDropsTheMarkdownMarks() {
+        let markdown = "# Intro\n> Le 5 octobre\n> - **Mise** en __image__\n* Ton sobre\n+ Fondus\nUn 5 * 3 reste."
+        #expect(Layout.plainText(markdown) == "Intro\nLe 5 octobre\nMise en image\nTon sobre\nFondus\nUn 5 * 3 reste.")
+    }
+
     @Test func titleIsTheFirstLineThatIsNotEmpty() {
         #expect(Layout.title("\n   \n  Mon intro  \nla suite") == "Mon intro")
         #expect(Layout.title(" \n\t\n") == nil)
+        #expect(Layout.title("> **Mon intro**\nla suite") == "Mon intro")
     }
 
     @Test func durationIsRoundedToTenSeconds() {

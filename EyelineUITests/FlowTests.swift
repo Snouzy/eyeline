@@ -31,6 +31,8 @@ nonisolated final class FlowTests: XCTestCase {
 
         app.buttons["Réglages"].tap()
         XCTAssertTrue(app.buttons["OK"].waitForExistence(timeout: 2))
+        app.buttons["Gauche"].tap()
+        app.buttons["Les deux"].tap()
         app.buttons["OK"].tap()
 
         app.buttons["Fermer"].tap()
