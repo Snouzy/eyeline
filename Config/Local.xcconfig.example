@@ -1,0 +1,6 @@
+// Copy this file to Config/Local.xcconfig. Git ignores that copy.
+// Your Team ID is in Xcode > Settings > Accounts, or at https://developer.apple.com/account.
+DEVELOPMENT_TEAM = ABCDE12345
+
+// A bundle identifier is unique across all Apple teams. Change it if you are not the author.
+// PRODUCT_BUNDLE_IDENTIFIER = com.example.eyeline
