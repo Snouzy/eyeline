@@ -22,7 +22,8 @@ A full-width line on an iPhone in landscape at 60 cm sweeps your eyes over more 
 
 ## ✨ Features
 
-- 🎯 **Lens-anchored text**: the text scrolls right against the camera body, on the left, on the right, or on both sides. On both sides, each line starts left of the camera and ends right of it.
+- 🎯 **Lens-anchored text**: the text scrolls right against the camera body: on the left, on the right, on both sides, above, below, or above and below. On the left and right, each line starts left of the camera and ends right of it.
+- 🔄 **Portrait and landscape**: each orientation remembers its own setup.
 - 📏 **Reading line at lens height**: the lines already read fade out; the lines to come stay visible down to the bottom of the screen.
 - 🛠️ **On-screen setup**: drag the edges of the hidden band until they line up with the camera body, and drag the reading line to the lens.
 - ↔️ **A width for each side**: drag the outer edge of each column. Text size (12 to 80 pt) and line spacing are settings too.
@@ -56,17 +57,18 @@ Eyeline is not on the App Store. Build it with Xcode.
 4. **Run:** open `Eyeline.xcodeproj`, choose your iPhone, press <kbd>⌘</kbd> + <kbd>R</kbd>.
 
 > [!NOTE]
-> The interface is in French: **Coller** (Paste), **Lire** (Read), **Réglages** (Setup), **Gauche / Les deux / Droite** (Left / Both / Right).
+> The interface is in French: **Coller** (Paste), **Lire** (Read), **Réglages** (Setup), **Position du texte** (Text position), **En haut / En bas** (Top / Bottom).
 
 ## 🚀 Quick Start
 
-1. Put the iPhone in landscape, behind the camera, with the lens near the middle of the screen.
+1. Put the iPhone behind the camera, in landscape or in portrait, with the lens near the middle of the screen.
 2. Copy your script, open Eyeline, tap **Coller**. Tap **Lire**.
 3. Tap the sliders button (**Réglages**). Sit at your filming position and look at the screen:
+   - choose where the text goes (**Position du texte**): left, right, left and right, top, bottom, or top and bottom;
    - drag each orange edge until it just disappears behind the camera body;
-   - drag each white edge to set the width of the text on that side;
-   - drag the horizontal line to the height of the lens;
-   - choose the side of the text (**Gauche**, **Les deux**, **Droite**), the text size (**Taille du texte**) and the line spacing (**Interligne**).
+   - drag each white edge to set how far the text goes on that side;
+   - drag the yellow line to the height of the lens;
+   - set the text size (**Taille du texte**) and the line spacing (**Interligne**).
 4. Tap **OK**, start the camera, tap the screen. The text starts after 3, 2, 1.
 
 ## 🎮 Usage
@@ -83,6 +85,7 @@ Tips:
 
 - Stand farther back and zoom in: at twice the distance, every angle is about half. The Pocket 3 has a 40 mm Med-Tele mode for this.
 - A narrow column with 2 or 3 words per line moves your eyes less than a wide one.
+- Text below the lens shows the least: viewers notice a glance down much less than a glance up or sideways. Text above the lens shows the most: keep it narrow and close to the camera.
 
 ## 🛠️ Development
 

@@ -5,16 +5,11 @@ struct PrompterView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     @AppStorage(Setting.wordsPerMinuteKey) private var wordsPerMinute = Setting.wordsPerMinute
     @AppStorage(Setting.fontSizeKey) private var fontSize = Setting.fontSize
     @AppStorage(Setting.lineSpacingKey) private var lineSpacing = Setting.lineSpacing
-    @AppStorage(Setting.leftColumnWidthKey) private var leftColumnWidth = Setting.columnWidth
-    @AppStorage(Setting.rightColumnWidthKey) private var rightColumnWidth = Setting.columnWidth
-    @AppStorage(Setting.columnSideKey) private var columnSide = Setting.columnSide
-    @AppStorage(Setting.bandCenterKey) private var bandCenter = Setting.bandCenter
-    @AppStorage(Setting.bandWidthKey) private var bandWidth = Setting.bandWidth
-    @AppStorage(Setting.readingLineKey) private var readingLine = Setting.readingLine
-
+    @State private var calibrations = CalibrationStore()
     @State private var phase = Phase.ready
     @State private var phaseBeforeCountdown = Phase.ready
     @State private var count = 3
@@ -30,41 +25,45 @@ struct PrompterView: View {
         case ended
     }
 
+    // On iPhone, the vertical size class is regular in portrait only.
+    private var calibration: Binding<Calibration> {
+        verticalSizeClass == .regular ? $calibrations.portrait : $calibrations.landscape
+    }
+
     var body: some View {
         ZStack {
             GeometryReader { proxy in
                 let size = proxy.size
-                let band = Layout.bandFrame(center: bandCenter, width: bandWidth, in: size)
-                let column = Layout.columnFrame(
-                    band: band, side: columnSide, leftWidth: leftColumnWidth, rightWidth: rightColumnWidth, in: size)
-                let readingY = Layout.readingLineY(readingLine, height: size.height)
+                let current = calibration.wrappedValue
+                let band = Layout.bandFrame(current, in: size)
+                let textFrame = Layout.textFrame(current, band: band, in: size)
+                let readingY = Layout.readingLineY(
+                    current.readingLine, text: textFrame, band: band, position: current.position,
+                    height: size.height, lineHeight: Layout.lineHeight(fontSize: fontSize, spacing: lineSpacing))
                 ScrollingText(
-                    text: text, fontSize: fontSize, lineSpacing: lineSpacing, columnFrame: column,
-                    hole: Layout.hole(band: band, column: column, side: columnSide), readingY: readingY,
-                    wordsPerMinute: wordsPerMinute, isScrolling: phase == .scrolling, resetToken: resetToken,
-                    onTap: tap, onEnd: { phase = .ended })
+                    text: text, fontSize: fontSize, lineSpacing: lineSpacing, columnFrame: textFrame,
+                    hole: Layout.hole(band: band, text: textFrame, position: current.position),
+                    readingY: readingY - textFrame.minY, wordsPerMinute: wordsPerMinute,
+                    isScrolling: phase == .scrolling, resetToken: resetToken, onTap: tap, onEnd: { phase = .ended })
                 Capsule()
                     .fill(.gray)
                     .frame(width: 4, height: fontSize)
-                    .position(x: columnSide == .left ? column.minX - 8 : column.maxX + 8, y: readingY)
+                    .position(x: current.position == .left ? textFrame.minX - 8 : textFrame.maxX + 8, y: readingY)
                 if phase == .countdown {
                     Text("\(count)")
                         .font(.system(size: fontSize * 2, weight: .bold))
                         .foregroundStyle(.white)
-                        .position(x: Layout.countdownX(band: band, column: column, side: columnSide), y: readingY)
+                        .position(
+                            x: Layout.countdownX(band: band, text: textFrame, position: current.position), y: readingY)
                 }
                 if isSetupShown {
-                    SetupHandles(
-                        size: size, band: band, column: column, side: columnSide, readingY: readingY,
-                        bandCenter: $bandCenter, bandWidth: $bandWidth,
-                        leftColumnWidth: $leftColumnWidth, rightColumnWidth: $rightColumnWidth,
-                        readingLine: $readingLine)
+                    SetupHandles(size: size, band: band, text: textFrame, readingY: readingY, calibration: calibration)
                 }
             }
             .ignoresSafeArea()
 
             if isSetupShown {
-                SetupPanel(columnSide: $columnSide, fontSize: $fontSize, lineSpacing: $lineSpacing) {
+                SetupPanel(position: calibration.position, fontSize: $fontSize, lineSpacing: $lineSpacing) {
                     isSetupShown = false
                 }
             } else if phase != .scrolling && phase != .countdown {

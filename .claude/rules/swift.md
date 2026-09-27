@@ -70,10 +70,11 @@ The sources are at the end of this file.
 ## Tests
 
 - Unit tests use Swift Testing. Flow tests use XCUITest.
-- A UI test turns the device to landscape before it launches the app. With the device in portrait, the hit points and the screenshots are rotated.
+- A UI test sets the orientation it needs before it launches the app: a test that ran in portrait leaves the device in portrait.
+- After a rotation, wait one second before a tap. On iOS 18, a tap during the rotation animation is lost.
 - Tap a text view at a coordinate, not with `element.tap()`: the accessibility point of a text view can be under the navigation bar.
 - Wait for the keyboard before `typeText`. The focus comes a moment after the tap.
-- Take screenshots with `xcrun simctl io booted screenshot`, not with XCUITest.
+- In a UI test, take screenshots with `XCUIScreen.main.screenshot()` and rotate the landscape ones. `app.screenshot()` of a landscape app comes out rotated and cropped. Outside a test, use `xcrun simctl io booted screenshot`.
 
 ## Build
 

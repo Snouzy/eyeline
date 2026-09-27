@@ -5,14 +5,18 @@ struct EditorView: View {
     @Environment(ScriptStore.self) private var store
     @State private var text = ""
     @State private var isReading = false
+    @FocusState private var isEditing: Bool
 
     var body: some View {
         TextEditor(text: $text)
+            .focused($isEditing)
             .padding(.horizontal)
             .navigationTitle(Layout.title(text) ?? "Sans titre")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 Button("Lire", systemImage: "play.fill") {
+                    // Otherwise the keyboard stays on top of the prompter.
+                    isEditing = false
                     isReading = true
                 }
                 .disabled(Layout.wordCount(text) == 0)

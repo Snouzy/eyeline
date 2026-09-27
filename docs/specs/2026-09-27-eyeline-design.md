@@ -44,7 +44,7 @@ On the recordings, viewers see that the user reads: the eyes sweep lines of text
 
 ## Platform
 
-- iPhone only, iOS 18 or later. The app is landscape only (left and right).
+- iPhone only, iOS 18 or later. Portrait and landscape (no upside-down portrait).
 - Interface strings in French. Code, comments and documentation in English.
 - Distribution: GitHub only. Users build with Xcode.
 - Name: Eyeline. Bundle identifier: `com.snouzy.eyeline`.
@@ -235,6 +235,20 @@ On 2026-09-27 the user asked for:
 ## Changes after the third test on the rig
 
 The fade hid the text more than three lines below the reading line. With small text and tight line spacing, that left most of the screen black under the reading line. Now only the lines already read fade out; the text to come stays visible to the bottom of the screen.
+
+## Changes after the fourth request: portrait and six positions
+
+On 2026-09-27 the user asked for the portrait orientation, then for six text positions in both orientations, chosen according to where the Pocket sits.
+
+- **Positions** (`TextPosition`): left, right, left and right, top, bottom, top and bottom. A menu in Setup lists them. Left and right positions go with a vertical band, top and bottom ones with a horizontal band.
+- **Horizontal band**: the orange edges move up and down. Top text stops at the band, bottom text starts under it. Top-and-bottom text runs the full height and scrolls behind the Pocket.
+- **Text edges** (white): with a vertical band, the widths count from the band edges, as before. With a horizontal band, they count from the screen centre.
+- **Reading line** (now yellow, so that it differs from the orange band edges): it stays half a line inside the text, and in top-and-bottom mode it goes to the nearest side of the band, never behind the Pocket.
+- **One drag gesture** in Setup takes the handle nearest to the touch, within 30 pt; the reading line wins a tie.
+- **A calibration per orientation** (`Calibration`, saved as JSON by `CalibrationStore`): position, band, text widths, reading line. Speed, text size and line spacing stay shared. The calibration from before this change is not carried over.
+- **Defaults**: landscape, left and right text around a centred vertical band. Portrait, text above a horizontal band at 60 % of the height, 150 pt on each side of the centre, reading line at 35 %.
+- **Keyboard**: "Lire" now closes the keyboard. It stayed on top of the prompter when the user had been typing.
+- The screenshot tour of the six positions, in both orientations and at the ends of the size and spacing sliders, found three problems, all fixed: the keyboard, the first line of bottom text cut by the band, and the reading line behind the Pocket in top-and-bottom mode.
 
 ## Risks
 
